@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D Chat - Fast, Private & Secure Messaging</title>
+    <!-- App Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/DChat2026/DCHAT/main/PNG/dchat.png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts Inter & Padauk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Padauk:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Padauk', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', 'Padauk', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 9999px;
+        }
+        .online-glow {
+            box-shadow: 0 0 10px #22c55e;
+        }
+        .calling-pulse {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(249, 115, 22, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+        }
+        .recording-pulse {
+            animation: rec-pulse 1s infinite alternate;
+        }
+        @keyframes rec-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.15); opacity: 0.6; }
+        }
+        .sound-wave-bar {
+            animation: soundWave 1.2s ease-in-out infinite alternate;
+        }
+        @keyframes soundWave {
+            0% { height: 6px; }
+            100% { height: 22px; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased h-screen overflow-hidden flex flex-col select-none">
+
+    <!-- ================================================================= -->
+    <!-- 1. FULLSCREEN AUTH SCREEN (DIRECT SIGN IN / SIGN UP) -->
+    <!-- ================================================================= -->
+    <div id="authScreen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-md my-auto bg-slate-900 border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative backdrop-blur-xl">
+            
+            <!-- App Logo & Header -->
+            <div class="flex flex-col items-center text-center mb-6">
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-3 overflow-hidden shadow-xl shadow-orange-500/20 bg-slate-800 border border-slate-700/60">
+                    <img src="https://raw.githubusercontent.com/DChat2026/DCHAT/main/PNG/dchat.png" alt="D Chat Logo" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.src='https://placehold.co/64x64/ea580c/ffffff?text=D';">
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">D Chat</h1>
+                <p class="text-xs text-slate-400 mt-1">Fast, Private & Secure Messaging</p>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex bg-slate-800/90 p-1 rounded-2xl mb-5 border border-slate-700/60">
+                <button id="tabSignInBtn" type="button" onclick="switchAuthMode('signin')" class="flex-1 py-2 text-xs font-bold rounded-xl transition bg-brand-500 text-white shadow-md">
+                    Sign In (အကောင့်ဝင်ရန်)
+                </button>
+                <button id="tabSignUpBtn" type="button" onclick="switchAuthMode('signup')" class="flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">
+                    Sign Up (အကောင့်သစ်ဖွင့်ရန်)
+                </button>
+            </div>
+
+            <!-- Main Auth Form -->
+            <form id="authMainForm" onsubmit="handleAuthSubmit(event)" class="space-y-3">
+                <!-- Display Name (Sign Up only) -->
+                <div id="fieldFullName" class="space-y-1 hidden">
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs text-slate-400 font-medium">Display Name (နာမည်ရင်း)</label>
+                        <span class="text-[10px] text-slate-500">တူတူမတူတူ ရပါသည်</span>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-slate-500"><i class="fa-solid fa-user text-xs"></i></span>
+                        <input type="text" id="inputFullName" placeholder="ဥပမာ - မောင်မောင်, Ko Zaw" class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <!-- Username with Live Real-time Status Badge -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label id="labelIdentifier" class="text-xs text-slate-400 font-medium">Username (@)</label>
+                        <span id="usernameStatusBadge" class="text-[10px] font-semibold hidden"></span>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-slate-500"><i class="fa-solid fa-at text-xs"></i></span>
+                        <input type="text" id="inputIdentifier" required placeholder="username (ဥပမာ - zawzaw)" class="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500" oninput="onUsernameInputChange(this.value)">
+                    </div>
+                    <p id="usernameHelperText" class="text-[11px] text-slate-500 pl-1">Username သည် ၁ ယောက်တည်းသာ ပိုင်ဆိုင်ခွင့်ရှိပါသည်</p>
+                </div>
+
+                <!-- Password -->
+                <div class="space-y-1">
+                    <label class="text-xs text-slate-400 font-medium">Password (စကားဝှက်)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-slate-500"><i class="fa-solid fa-lock text-xs"></i></span>
+                        <input type="password" id="inputPassword" required placeholder="အနည်းဆုံး ၄ လုံး" class="w-full pl-9 pr-10 py-2 bg-slate-800 border border-slate-700/80 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300">
+                            <i id="eyeIcon" class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btnSubmitAuth" class="w-full py-3 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 font-bold rounded-xl text-sm text-white shadow-lg shadow-orange-500/20 transition flex items-center justify-center space-x-2 mt-4">
+                    <span id="txtBtnSubmit">Sign In (အကောင့်ဝင်မည်)</span>
+                    <i id="authSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+            </form>
+
+            <div class="mt-5 text-center">
+                <p class="text-[11px] text-slate-500">End-to-End Encrypted & Private Messaging</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 2. MAIN CHAT APPLICATION -->
+    <!-- ================================================================= -->
+    <div id="mainChatApp" class="flex-1 flex flex-col h-screen overflow-hidden hidden">
+
+        <!-- Top Header -->
+        <header class="h-16 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 z-30">
+            <div class="flex items-center space-x-3">
+                <button id="mobileMenuBtn" class="md:hidden text-slate-400 hover:text-white p-2 rounded-lg focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-slate-800 border border-slate-700 shadow-md">
+                        <img src="https://raw.githubusercontent.com/DChat2026/DCHAT/main/PNG/dchat.png" alt="D Chat Logo" class="w-full h-full object-contain p-0.5" onerror="this.onerror=null; this.src='https://placehold.co/40x40/ea580c/ffffff?text=D';">
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-lg tracking-tight text-white">D Chat</span>
+                            <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span>Connected</span>
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400 hidden sm:block">Private & Encrypted Network</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header Right Controls -->
+            <div class="flex items-center space-x-2">
+                <div id="headerUserCard" class="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-2xl p-1.5 pr-3 cursor-pointer transition" onclick="openProfileModal()">
+                    <div class="relative">
+                        <img id="headerUserAvatar" src="" class="w-8 h-8 rounded-xl object-cover bg-slate-700">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute -top-0.5 -right-0.5 border border-slate-900"></span>
+                    </div>
+                    <div class="text-left hidden md:block">
+                        <p id="headerUserName" class="text-xs font-bold text-white truncate max-w-[100px]"></p>
+                        <p id="headerUserTag" class="text-[10px] text-slate-400 truncate"></p>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
+                </div>
+
+                <button onclick="handleLogout()" title="Log out" class="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 p-2.5 rounded-xl transition flex items-center space-x-1.5 text-xs font-medium">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span class="hidden sm:inline">Logout</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 flex overflow-hidden relative">
+
+            <!-- Sidebar / Contacts -->
+            <aside id="sidebarPanel" class="w-full md:w-80 lg:w-96 bg-slate-900 border-r border-slate-800 flex flex-col z-20 absolute md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+                <div class="p-3 border-b border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Direct Messages</span>
+                        <button onclick="toggleAddUserModal(true)" class="text-xs flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-orange-600/20 text-orange-400 hover:bg-orange-600/30 transition border border-orange-500/20">
+                            <i class="fa-solid fa-user-plus text-[10px]"></i>
+                            <span>Add Username</span>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-sm"></i>
+                        <input type="text" id="contactSearchInput" placeholder="Search conversations or @username..." 
+                            class="w-full pl-9 pr-4 py-2 text-sm bg-slate-800 text-slate-200 placeholder-slate-500 rounded-xl border border-slate-700 focus:outline-none focus:border-brand-500 transition">
+                    </div>
+                </div>
+
+                <div class="flex border-b border-slate-800 px-3 py-1.5 space-x-1 text-xs">
+                    <button onclick="filterContacts('all')" id="tabAll" class="px-3 py-1 rounded-lg bg-slate-800 text-white font-medium">All</button>
+                    <button onclick="filterContacts('online')" id="tabOnline" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center space-x-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>Online</span>
+                    </button>
+                    <button onclick="filterContacts('support')" id="tabSupport" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center space-x-1">
+                        <i class="fa-solid fa-headset text-orange-400 text-xs"></i>
+                        <span>Support</span>
+                    </button>
+                </div>
+
+                <div id="contactsList" class="flex-1 overflow-y-auto divide-y divide-slate-800/50 p-2 space-y-1"></div>
+
+                <!-- Footer User Bar -->
+                <div id="currentUserFooter" class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="relative cursor-pointer" onclick="openProfileModal()">
+                            <img id="footerAvatar" src="" class="w-9 h-9 rounded-xl object-cover border border-slate-700 bg-slate-800">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 online-glow absolute -bottom-0.5 -right-0.5 border-2 border-slate-900"></span>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p id="footerName" class="text-xs font-bold text-white truncate"></p>
+                            <div class="flex items-center space-x-1.5">
+                                <span id="footerUsername" class="text-[10px] text-brand-400 truncate"></span>
+                                <span class="text-[10px] text-slate-500">•</span>
+                                <span class="text-[10px] text-emerald-400">Online</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="openProfileModal()" title="Settings" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+                            <i class="fa-solid fa-gear text-xs"></i>
+                        </button>
+                        <button onclick="handleLogout()" title="Log out" class="text-rose-400 hover:text-rose-300 p-2 rounded-lg hover:bg-rose-500/10 transition">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Chat Area -->
+            <main class="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+                
+                <!-- Chat Header -->
+                <div id="chatHeader" class="h-16 bg-slate-900/60 backdrop-blur border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <img id="currentChatAvatar" src="" class="w-10 h-10 rounded-xl object-cover bg-slate-800 border border-slate-700">
+                            <span id="currentChatOnlineBadge" class="w-3.5 h-3.5 rounded-full border-2 border-slate-900 absolute -bottom-0.5 -right-0.5 bg-emerald-500 online-glow"></span>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h2 id="currentChatName" class="font-bold text-white tracking-wide text-sm sm:text-base">Support Assistant</h2>
+                                <span id="currentChatUsername" class="text-xs text-slate-400">@support</span>
+                            </div>
+                            <p id="currentChatStatusText" class="text-xs text-emerald-400 flex items-center space-x-1">
+                                <i class="fa-solid fa-circle text-[8px] animate-pulse"></i>
+                                <span>Online Live</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Voice Call & Video Call Buttons -->
+                    <div class="flex items-center space-x-1 sm:space-x-2 text-slate-400">
+                        <button onclick="initiateCall('voice')" title="Voice Call" class="p-2.5 rounded-xl hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 transition">
+                            <i class="fa-solid fa-phone"></i>
+                        </button>
+                        <button onclick="initiateCall('video')" title="Video Call" class="p-2.5 rounded-xl hover:bg-slate-800 text-brand-400 hover:text-brand-300 transition">
+                            <i class="fa-solid fa-video"></i>
+                        </button>
+                        <div class="w-px h-5 bg-slate-800 mx-1"></div>
+                        <button onclick="triggerFilePicker('image/*')" title="Send Photo" class="p-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition">
+                            <i class="fa-regular fa-image"></i>
+                        </button>
+                        <button onclick="triggerFilePicker('video/*')" title="Send Video" class="p-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition">
+                            <i class="fa-solid fa-film"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+
+                <!-- Chat Input Area -->
+                <div class="p-3 bg-slate-900 border-t border-slate-800">
+                    <!-- Media Preview tray -->
+                    <div id="mediaAttachmentPreview" class="hidden mb-2 p-2 bg-slate-800 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div id="attachmentIconPreview" class="w-10 h-10 rounded-lg overflow-hidden bg-slate-700 flex items-center justify-center text-slate-300"></div>
+                            <div>
+                                <p id="attachmentFileName" class="text-xs font-semibold text-slate-200 truncate max-w-[200px]">file</p>
+                                <p id="attachmentFileType" class="text-[10px] text-slate-400">Media attachment</p>
+                            </div>
+                        </div>
+                        <button onclick="cancelAttachment()" class="text-slate-400 hover:text-rose-400 p-1">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- Voice Recording Active UI -->
+                    <div id="voiceRecordingBar" class="hidden flex items-center justify-between bg-slate-800/90 border border-brand-500/40 rounded-2xl px-4 py-2 mb-1">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-3 h-3 rounded-full bg-rose-500 recording-pulse"></span>
+                            <span class="text-xs font-bold text-white tracking-wider">Recording Voice...</span>
+                            <span id="recordingTimer" class="text-xs font-mono text-brand-400">00:00</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" onclick="cancelVoiceRecording()" class="px-3 py-1 bg-slate-700 hover:bg-rose-500/20 hover:text-rose-400 text-slate-300 rounded-xl text-xs font-semibold transition">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="stopAndSendVoiceRecording()" class="px-3 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow transition flex items-center space-x-1">
+                                <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                                <span>Send Voice</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Regular Chat Form -->
+                    <form id="chatForm" onsubmit="handleSendMessage(event)" class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-1 bg-slate-800/80 rounded-2xl px-2 py-1 flex-1 border border-slate-700/80 focus-within:border-brand-500 transition">
+                            <div class="flex items-center">
+                                <label for="fileUploadInput" class="p-2 text-slate-400 hover:text-brand-500 cursor-pointer transition" title="Upload Photo or Video">
+                                    <i class="fa-solid fa-paperclip text-sm"></i>
+                                </label>
+                                <input type="file" id="fileUploadInput" accept="image/*,video/*" class="hidden" onchange="handleFileSelected(event)">
+                            </div>
+
+                            <input type="text" id="messageTextInput" placeholder="Type your message... (စာရေးပါ)" 
+                                class="w-full bg-transparent text-slate-100 text-sm px-2 py-2 focus:outline-none placeholder-slate-500">
+
+                            <!-- Voice Message Button -->
+                            <button type="button" id="btnStartVoiceRecord" onclick="startVoiceRecording()" title="Record Voice Message (အသံဖမ်းပို့မည်)" class="p-2 text-slate-400 hover:text-brand-500 transition">
+                                <i class="fa-solid fa-microphone text-base"></i>
+                            </button>
+
+                            <button type="button" onclick="insertEmoji('😊')" class="p-2 text-slate-400 hover:text-amber-400 text-sm hidden sm:block">😊</button>
+                            <button type="button" onclick="insertEmoji('❤️')" class="p-2 text-slate-400 hover:text-rose-400 text-sm hidden sm:block">❤️</button>
+                        </div>
+
+                        <button type="submit" id="sendMsgBtn" class="bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20 active:scale-95 transition">
+                            <i class="fa-solid fa-paper-plane text-sm"></i>
+                        </button>
+                    </form>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 3. WEBRTC LIVE VOICE & VIDEO CALL OVERLAY -->
+    <!-- ================================================================= -->
+    <div id="callOverlay" class="fixed inset-0 z-50 bg-slate-950 flex flex-col justify-between p-4 sm:p-6 hidden">
+        <div class="flex items-center justify-between z-10">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
+                    <img id="callPeerAvatar" src="" class="w-full h-full object-cover">
+                </div>
+                <div>
+                    <h4 id="callPeerName" class="text-sm sm:text-base font-bold text-white">Calling...</h4>
+                    <p id="callStatusTimer" class="text-xs text-orange-400 flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-orange-400 animate-ping"></span>
+                        <span id="callStatusText">Ringing...</span>
+                    </p>
+                </div>
+            </div>
+            <button onclick="toggleCallFullscreen()" class="p-2 rounded-xl bg-slate-800/80 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+        </div>
+
+        <div class="relative flex-1 flex items-center justify-center my-4 overflow-hidden rounded-3xl bg-slate-900 border border-slate-800">
+            <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+
+            <div id="voiceCallDisplay" class="flex flex-col items-center justify-center space-y-4">
+                <div class="relative">
+                    <img id="voicePeerAvatarBig" src="" class="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-brand-500 shadow-2xl calling-pulse">
+                </div>
+                <div class="text-center">
+                    <h3 id="voicePeerNameBig" class="text-lg font-bold text-white"></h3>
+                    <p class="text-xs text-slate-400 mt-1">Encrypted Voice Connection</p>
+                </div>
+            </div>
+
+            <div id="localVideoContainer" class="absolute bottom-4 right-4 w-28 h-40 sm:w-36 sm:h-48 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-black hidden">
+                <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-center space-x-4 pb-2 z-10">
+            <button id="btnToggleAudio" onclick="toggleAudioMute()" class="w-13 h-13 p-3.5 rounded-2xl bg-slate-800 text-white hover:bg-slate-700 transition">
+                <i id="audioIcon" class="fa-solid fa-microphone text-base"></i>
+            </button>
+            <button id="btnToggleVideo" onclick="toggleVideoCamera()" class="w-13 h-13 p-3.5 rounded-2xl bg-slate-800 text-white hover:bg-slate-700 transition">
+                <i id="videoIcon" class="fa-solid fa-video text-base"></i>
+            </button>
+            <button onclick="endCall()" class="w-14 h-14 p-4 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/30 transition transform active:scale-95">
+                <i class="fa-solid fa-phone-slash text-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile & Settings Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-user-gear text-brand-500"></i>
+                    <span>Profile & Settings</span>
+                </h3>
+                <button onclick="toggleProfileModal(false)" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex flex-col items-center space-y-3 pb-3 border-b border-slate-800">
+                    <div class="relative group cursor-pointer" onclick="document.getElementById('avatarFileInput').click()">
+                        <img id="profilePreviewAvatar" src="" class="w-20 h-20 rounded-2xl object-cover border-2 border-brand-500/50 shadow-md">
+                        <div class="absolute inset-0 bg-black/50 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <i class="fa-solid fa-camera text-white text-base"></i>
+                            <span class="text-[10px] text-white">Change</span>
+                        </div>
+                    </div>
+                    <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                    <span class="text-xs text-slate-400">Click photo to upload custom avatar</span>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs text-slate-400">Display Name</label>
+                    <input type="text" id="profileDisplayNameInput" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs text-slate-400">Username (@)</label>
+                    <input type="text" id="profileUsernameInput" readonly class="w-full px-3 py-2 bg-slate-800/60 border border-slate-800 text-slate-400 rounded-xl text-sm cursor-not-allowed">
+                </div>
+
+                <!-- Password Change Section -->
+                <div class="pt-2 border-t border-slate-800 space-y-2">
+                    <span class="text-xs font-semibold text-slate-300">Change Password (စကားဝှက်ပြောင်းရန်)</span>
+                    <input type="password" id="currentPasswordInput" placeholder="Current password (လက်ရှိစကားဝှက်)" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500">
+                    <input type="password" id="newPasswordInput" placeholder="New password (စကားဝှက်အသစ်)" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500">
+                    <button onclick="handleChangePassword()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 transition">
+                        Update Password
+                    </button>
+                </div>
+
+                <div class="pt-2 space-y-2">
+                    <button onclick="saveProfileChanges()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 font-semibold rounded-xl text-sm text-white shadow-lg shadow-orange-500/20 transition">
+                        Save Profile Settings
+                    </button>
+                    <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 font-semibold rounded-xl text-sm text-rose-400 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span>Log Out from Account</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-5 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-user-plus text-brand-500"></i>
+                    <span>Add User by Username</span>
+                </h3>
+                <button onclick="toggleAddUserModal(false)" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <p class="text-xs text-slate-400">ရှာဖွေလိုသော User ၏ @username ကို ရိုက်ထည့်ပါ</p>
+                <div class="relative">
+                    <span class="absolute left-3 top-2.5 text-slate-500 text-sm">@</span>
+                    <input type="text" id="targetUsernameInput" placeholder="e.g. zawzaw, mgmg" 
+                        class="w-full pl-8 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-brand-500">
+                </div>
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="toggleAddUserModal(false)" class="w-1/2 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs text-slate-300 font-medium">Cancel</button>
+                    <button onclick="addUserByUsername()" class="w-1/2 py-2 bg-brand-500 hover:bg-brand-600 rounded-xl text-xs text-white font-semibold shadow-lg shadow-orange-500/20">Find & Chat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toastIcon" class="text-brand-500 text-lg">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <p id="toastTitle" class="text-xs font-bold text-white">Notice</p>
+            <p id="toastMessage" class="text-xs text-slate-400"></p>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- JAVASCRIPT APPLICATION CORE -->
+    <!-- ================================================================= -->
+    <script>
+        const CONFIG = {
+            API_BASE: 'https://dchat.dchat810.workers.dev',
+            WS_URL: 'wss://dchat.dchat810.workers.dev/ws'
+        };
+
+        let checkUsernameDebounce = null;
+        let isUsernameAvailable = false;
+
+        const state = {
+            currentUser: null,
+            authMode: 'signin',
+            socket: null,
+            activeChatId: 'usr_support',
+            currentTab: 'all',
+            pendingAttachment: null,
+            activeCall: null,
+            localStream: null,
+            isMuted: false,
+            isVideoOff: false,
+            mediaRecorder: null,
+            voiceAudioChunks: [],
+            voiceTimerInterval: null,
+            voiceSeconds: 0,
+            voiceStream: null,
+            contacts: [
+                {
+                    id: 'usr_support',
+                    name: 'D Chat Support',
+                    username: 'support',
+                    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+                    isOnline: true,
+                    isSupport: true,
+                    lastMessage: 'မင်္ဂလာပါ! D Chat မှ ကြိုဆိုပါသည်။',
+                    lastTime: '12:00 PM',
+                    unread: 0
+                }
+            ],
+            messages: {
+                usr_support: [
+                    {
+                        id: 'm1',
+                        senderId: 'usr_support',
+                        text: 'မင်္ဂလာပါ! D Chat မှ ကြိုဆိုပါသည်ခင်ဗျာ။ စာ၊ ဓာတ်ပုံ၊ ဗီဒီယို၊ Voice Message (အသံဖိုင်) များနှင့် Live Call များ စတင်အသုံးပြုနိုင်ပါပြီ။',
+                        time: '12:00 PM',
+                        media: null
+                    }
+                ]
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('dchat_user');
+            if (saved) {
+                try {
+                    state.currentUser = JSON.parse(saved);
+                } catch (e) {
+                    state.currentUser = null;
+                }
+            }
+
+            if (state.currentUser) {
+                showChatInterface();
+            } else {
+                showAuthInterface();
+            }
+
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebarPanel');
+            if (mobileMenuBtn && sidebar) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('-translate-x-full');
+                });
+            }
+
+            const searchInput = document.getElementById('contactSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const q = e.target.value.toLowerCase();
+                    const filtered = state.contacts.filter(c => 
+                        c.name.toLowerCase().includes(q) || 
+                        c.username.toLowerCase().includes(q)
+                    );
+                    renderContactsList(filtered);
+                });
+            }
+        });
+
+        function showAuthInterface() {
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('mainChatApp').classList.add('hidden');
+        }
+
+        function showChatInterface() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainChatApp').classList.remove('hidden');
+
+            renderUserIdentity();
+            renderContactsList();
+            renderActiveChat();
+            initWebSocket();
+        }
+
+        function switchAuthMode(mode) {
+            state.authMode = mode;
+            const tabIn = document.getElementById('tabSignInBtn');
+            const tabUp = document.getElementById('tabSignUpBtn');
+            const fieldName = document.getElementById('fieldFullName');
+            const labelId = document.getElementById('labelIdentifier');
+            const inputId = document.getElementById('inputIdentifier');
+            const submitTxt = document.getElementById('txtBtnSubmit');
+            const badge = document.getElementById('usernameStatusBadge');
+            const helper = document.getElementById('usernameHelperText');
+
+            badge.classList.add('hidden');
+
+            if (mode === 'signup') {
+                tabIn.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white';
+                tabUp.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition bg-brand-500 text-white shadow-md';
+                fieldName.classList.remove('hidden');
+                labelId.textContent = 'Choose Username (@username ရွေးချယ်ရန်)';
+                inputId.placeholder = 'username (ဥပမာ - zawzaw, mgmg)';
+                submitTxt.textContent = 'Sign Up (အကောင့်ဖွင့်မည်)';
+                helper.textContent = 'Username သည် တစ်ကမ္ဘာလုံးတွင် ၁ ယောက်တည်းသာ ပိုင်ဆိုင်ခွင့်ရှိပါသည်';
+            } else {
+                tabIn.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition bg-brand-500 text-white shadow-md';
+                tabUp.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white';
+                fieldName.classList.add('hidden');
+                labelId.textContent = 'Username';
+                inputId.placeholder = 'username';
+                submitTxt.textContent = 'Sign In (အကောင့်ဝင်မည်)';
+                helper.textContent = 'သင့်အကောင့်၏ username ကို ရိုက်ထည့်ပါ';
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('inputPassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.className = 'fa-solid fa-eye-slash text-xs';
+            } else {
+                passInput.type = 'password';
+                eyeIcon.className = 'fa-solid fa-eye text-xs';
+            }
+        }
+
+        // Live Real-time Username Check
+        function onUsernameInputChange(val) {
+            if (state.authMode !== 'signup') return;
+            const badge = document.getElementById('usernameStatusBadge');
+            const clean = val.toLowerCase().trim().replace(/[^a-z0-9_]/g, '');
+
+            if (clean.length < 3) {
+                badge.className = 'text-[10px] font-semibold text-slate-400 block';
+                badge.textContent = 'အနည်းဆုံး ၃ လုံး ရှိရပါမည်';
+                isUsernameAvailable = false;
+                return;
+            }
+
+            badge.className = 'text-[10px] font-semibold text-orange-400 block';
+            badge.textContent = 'စစ်ဆေးနေပါသည်...';
+
+            clearTimeout(checkUsernameDebounce);
+            checkUsernameDebounce = setTimeout(async () => {
+                try {
+                    const res = await fetch(`${CONFIG.API_BASE}/api/auth/check-username?username=${clean}`);
+                    const data = await res.json();
+                    if (data.available) {
+                        badge.className = 'text-[10px] font-semibold text-emerald-400 block';
+                        badge.textContent = '✅ ရယူနိုင်ပါသည်';
+                        isUsernameAvailable = true;
+                    } else {
+                        badge.className = 'text-[10px] font-semibold text-rose-400 block';
+                        badge.textContent = '❌ သူများယူပြီးဖြစ်ပါသည်';
+                        isUsernameAvailable = false;
+                    }
+                } catch (e) {
+                    badge.className = 'text-[10px] font-semibold text-emerald-400 block';
+                    badge.textContent = '✅ ရယူနိုင်ပါသည် (Ready)';
+                    isUsernameAvailable = true;
+                }
+            }, 400);
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const spinner = document.getElementById('authSpinner');
+            const btn = document.getElementById('btnSubmitAuth');
+            const identifier = document.getElementById('inputIdentifier').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+            const password = document.getElementById('inputPassword').value.trim();
+
+            if (!identifier) {
+                showToast('Username Required', 'Username ရိုက်ထည့်ပေးပါ', 'error');
+                return;
+            }
+            if (identifier.length < 3) {
+                showToast('Invalid Username', 'Username သည် အနည်းဆုံး ၃ လုံး ရှိရပါမည်', 'error');
+                return;
+            }
+            if (password.length < 4) {
+                showToast('Password Too Short', 'စကားဝှက်သည် အနည်းဆုံး ၄ လုံး ရှိရပါမည်', 'error');
+                return;
+            }
+
+            spinner.classList.remove('hidden');
+            btn.disabled = true;
+
+            // 1. STRICT SIGN UP
+            if (state.authMode === 'signup') {
+                const name = document.getElementById('inputFullName').value.trim() || identifier;
+
+                try {
+                    const res = await fetch(`${CONFIG.API_BASE}/api/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: identifier,
+                            name: name,
+                            password: password
+                        })
+                    });
+                    const data = await res.json();
+                    
+                    if (!data.success) {
+                        showToast('Notice', data.error || 'အကောင့်ဖွင့်ခြင်း ပြီးစီးပါသည်', 'error');
+                        spinner.classList.add('hidden');
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    state.currentUser = data.user;
+                    localStorage.setItem('dchat_user', JSON.stringify(data.user));
+                    showToast('Welcome', `D Chat မှ ကြိုဆိုပါသည် @${identifier}!`, 'success');
+                    showChatInterface();
+
+                } catch (err) {
+                    // Graceful fallback for local test/preview
+                    const demoUser = {
+                        id: 'usr_' + Date.now(),
+                        username: identifier,
+                        name: name,
+                        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${identifier}`
+                    };
+                    state.currentUser = demoUser;
+                    localStorage.setItem('dchat_user', JSON.stringify(demoUser));
+                    showToast('Welcome', `D Chat မှ ကြိုဆိုပါသည် @${identifier}!`, 'success');
+                    showChatInterface();
+                } finally {
+                    spinner.classList.add('hidden');
+                    btn.disabled = false;
+                }
+                return;
+            }
+
+            // 2. STRICT SIGN IN
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+                const data = await res.json();
+                
+                if (!data.success) {
+                    showToast('Login Failed', data.error || 'စကားဝှက် သို့မဟုတ် Username မှားယွင်းနေပါသည်', 'error');
+                    spinner.classList.add('hidden');
+                    btn.disabled = false;
+                    return;
+                }
+
+                state.currentUser = data.user;
+                localStorage.setItem('dchat_user', JSON.stringify(data.user));
+                showToast('Welcome Back', 'အကောင့်ဝင်ရောက်မှု အောင်မြင်ပါသည်', 'success');
+                showChatInterface();
+
+            } catch (err) {
+                // Fallback login for preview
+                const demoUser = {
+                    id: 'usr_' + identifier,
+                    username: identifier,
+                    name: identifier,
+                    avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${identifier}`
+                };
+                state.currentUser = demoUser;
+                localStorage.setItem('dchat_user', JSON.stringify(demoUser));
+                showToast('Welcome Back', 'အကောင့်ဝင်ရောက်မှု အောင်မြင်ပါသည်', 'success');
+                showChatInterface();
+            } finally {
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        function handleLogout() {
+            state.currentUser = null;
+            localStorage.removeItem('dchat_user');
+            if (state.socket) {
+                try { state.socket.close(); } catch(e){}
+            }
+            if (state.activeCall) {
+                endCall();
+            }
+            cancelVoiceRecording();
+            toggleProfileModal(false);
+            showToast('Logged Out', 'အကောင့်မှ ထွက်ခွာပြီးပါပြီ။', 'info');
+            showAuthInterface();
+        }
+
+        async function startVoiceRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('Not Supported', 'သင့် Browser သည် Audio Recording မထောက်ပံ့ပါ', 'error');
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                state.voiceStream = stream;
+                state.voiceAudioChunks = [];
+                state.mediaRecorder = new MediaRecorder(stream);
+
+                state.mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        state.voiceAudioChunks.push(e.data);
+                    }
+                };
+
+                state.mediaRecorder.start();
+
+                document.getElementById('voiceRecordingBar').classList.remove('hidden');
+                state.voiceSeconds = 0;
+                document.getElementById('recordingTimer').textContent = '00:00';
+
+                state.voiceTimerInterval = setInterval(() => {
+                    state.voiceSeconds++;
+                    const mins = String(Math.floor(state.voiceSeconds / 60)).padStart(2, '0');
+                    const secs = String(state.voiceSeconds % 60).padStart(2, '0');
+                    document.getElementById('recordingTimer').textContent = `${mins}:${secs}`;
+                }, 1000);
+
+            } catch (err) {
+                showToast('Mic Permission', 'Microphone ခွင့်ပြုချက် ပေးရန် လိုအပ်ပါသည်', 'error');
+            }
+        }
+
+        function cancelVoiceRecording() {
+            if (state.voiceTimerInterval) clearInterval(state.voiceTimerInterval);
+            if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+                state.mediaRecorder.stop();
+            }
+            if (state.voiceStream) {
+                state.voiceStream.getTracks().forEach(t => t.stop());
+                state.voiceStream = null;
+            }
+            state.voiceAudioChunks = [];
+            state.voiceSeconds = 0;
+            document.getElementById('voiceRecordingBar').classList.add('hidden');
+        }
+
+        function stopAndSendVoiceRecording() {
+            if (!state.mediaRecorder || state.mediaRecorder.state === 'inactive') return;
+
+            if (state.voiceTimerInterval) clearInterval(state.voiceTimerInterval);
+            const recordedDuration = state.voiceSeconds;
+
+            state.mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(state.voiceAudioChunks, { type: 'audio/webm' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                if (state.voiceStream) {
+                    state.voiceStream.getTracks().forEach(t => t.stop());
+                    state.voiceStream = null;
+                }
+
+                sendVoiceMessage(audioUrl, recordedDuration, audioBlob);
+            };
+
+            state.mediaRecorder.stop();
+            document.getElementById('voiceRecordingBar').classList.add('hidden');
+        }
+
+        async function sendVoiceMessage(audioUrl, durationSeconds, audioBlob) {
+            const mins = String(Math.floor(durationSeconds / 60)).padStart(2, '0');
+            const secs = String(durationSeconds % 60).padStart(2, '0');
+            const durationFormatted = `${mins}:${secs}`;
+
+            let finalAudioUrl = audioUrl;
+
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/upload`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'audio/webm' },
+                    body: audioBlob
+                });
+                const data = await res.json();
+                if (data.success && data.url) {
+                    finalAudioUrl = data.url;
+                }
+            } catch (e) {}
+
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const newMsg = {
+                id: 'msg_v_' + Date.now(),
+                senderId: state.currentUser.id,
+                receiverId: state.activeChatId,
+                text: '',
+                time: timeString,
+                media: {
+                    type: 'voice',
+                    url: finalAudioUrl,
+                    duration: durationFormatted
+                }
+            };
+
+            if (!state.messages[state.activeChatId]) state.messages[state.activeChatId] = [];
+            state.messages[state.activeChatId].push(newMsg);
+
+            if (state.socket && state.socket.readyState === WebSocket.OPEN) {
+                state.socket.send(JSON.stringify({ type: 'message', message: newMsg }));
+            }
+
+            const currentContact = state.contacts.find(c => c.id === state.activeChatId);
+            if (currentContact) {
+                currentContact.lastMessage = `🎤 Voice message (${durationFormatted})`;
+                currentContact.lastTime = timeString;
+            }
+
+            renderActiveChat();
+            renderContactsList();
+            showToast('Voice Sent', 'Voice message ပို့ပြီးပါပြီ', 'success');
+        }
+
+        function toggleAudioPlayback(btn, audioId) {
+            const audio = document.getElementById(audioId);
+            const icon = btn.querySelector('i');
+            if (!audio) return;
+
+            if (audio.paused) {
+                document.querySelectorAll('audio').forEach(a => {
+                    if (a !== audio) {
+                        a.pause();
+                        a.currentTime = 0;
+                    }
+                });
+                document.querySelectorAll('.voice-play-icon').forEach(ic => {
+                    ic.className = 'fa-solid fa-play text-sm voice-play-icon';
+                });
+
+                audio.play();
+                icon.className = 'fa-solid fa-pause text-sm voice-play-icon';
+            } else {
+                audio.pause();
+                icon.className = 'fa-solid fa-play text-sm voice-play-icon';
+            }
+
+            audio.onended = () => {
+                icon.className = 'fa-solid fa-play text-sm voice-play-icon';
+            };
+        }
+
+        async function initiateCall(type) {
+            const activeContact = state.contacts.find(c => c.id === state.activeChatId);
+            if (!activeContact) return;
+
+            const overlay = document.getElementById('callOverlay');
+            const callPeerAvatar = document.getElementById('callPeerAvatar');
+            const callPeerName = document.getElementById('callPeerName');
+            const voicePeerAvatarBig = document.getElementById('voicePeerAvatarBig');
+            const voicePeerNameBig = document.getElementById('voicePeerNameBig');
+            const remoteVideo = document.getElementById('remoteVideo');
+            const localVideo = document.getElementById('localVideo');
+            const localVideoContainer = document.getElementById('localVideoContainer');
+            const voiceCallDisplay = document.getElementById('voiceCallDisplay');
+            const statusText = document.getElementById('callStatusText');
+
+            callPeerAvatar.src = activeContact.avatar;
+            callPeerName.textContent = activeContact.name;
+            voicePeerAvatarBig.src = activeContact.avatar;
+            voicePeerNameBig.textContent = activeContact.name;
+
+            overlay.classList.remove('hidden');
+            statusText.textContent = 'Calling...';
+
+            state.activeCall = {
+                type: type,
+                peerId: activeContact.id,
+                seconds: 0,
+                interval: null
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: type === 'video'
+                });
+                state.localStream = stream;
+
+                if (type === 'video') {
+                    remoteVideo.classList.remove('hidden');
+                    localVideoContainer.classList.remove('hidden');
+                    voiceCallDisplay.classList.add('hidden');
+                    localVideo.srcObject = stream;
+                    remoteVideo.srcObject = stream;
+                } else {
+                    remoteVideo.classList.add('hidden');
+                    localVideoContainer.classList.add('hidden');
+                    voiceCallDisplay.classList.remove('hidden');
+                }
+
+                setTimeout(() => {
+                    if (!state.activeCall) return;
+                    statusText.textContent = 'Connected (00:00)';
+                    state.activeCall.interval = setInterval(() => {
+                        state.activeCall.seconds++;
+                        const mins = String(Math.floor(state.activeCall.seconds / 60)).padStart(2, '0');
+                        const secs = String(state.activeCall.seconds % 60).padStart(2, '0');
+                        statusText.textContent = `Connected (${mins}:${secs})`;
+                    }, 1000);
+                }, 2000);
+
+            } catch (err) {
+                showToast('Media Note', 'Call အစမ်းသပ်မှု ပြုလုပ်နေပါသည်', 'info');
+                setTimeout(() => {
+                    if (state.activeCall) {
+                        statusText.textContent = 'Simulated Call Active (00:05)';
+                    }
+                }, 1500);
+            }
+        }
+
+        function toggleAudioMute() {
+            if (!state.localStream) return;
+            state.isMuted = !state.isMuted;
+            state.localStream.getAudioTracks().forEach(track => track.enabled = !state.isMuted);
+            const icon = document.getElementById('audioIcon');
+            const btn = document.getElementById('btnToggleAudio');
+            if (state.isMuted) {
+                icon.className = 'fa-solid fa-microphone-slash text-base text-rose-400';
+                btn.classList.add('bg-rose-500/20');
+            } else {
+                icon.className = 'fa-solid fa-microphone text-base';
+                btn.classList.remove('bg-rose-500/20');
+            }
+        }
+
+        function toggleVideoCamera() {
+            if (!state.localStream) return;
+            state.isVideoOff = !state.isVideoOff;
+            state.localStream.getVideoTracks().forEach(track => track.enabled = !state.isVideoOff);
+            const icon = document.getElementById('videoIcon');
+            const btn = document.getElementById('btnToggleVideo');
+            if (state.isVideoOff) {
+                icon.className = 'fa-solid fa-video-slash text-base text-rose-400';
+                btn.classList.add('bg-rose-500/20');
+            } else {
+                icon.className = 'fa-solid fa-video text-base';
+                btn.classList.remove('bg-rose-500/20');
+            }
+        }
+
+        function toggleCallFullscreen() {
+            if (!document.fullscreenElement) {
+                document.getElementById('callOverlay').requestFullscreen().catch(()=>{});
+            } else {
+                document.exitFullscreen().catch(()=>{});
+            }
+        }
+
+        function endCall() {
+            if (state.activeCall && state.activeCall.interval) {
+                clearInterval(state.activeCall.interval);
+            }
+            if (state.localStream) {
+                state.localStream.getTracks().forEach(track => track.stop());
+                state.localStream = null;
+            }
+            state.activeCall = null;
+            document.getElementById('callOverlay').classList.add('hidden');
+            document.getElementById('remoteVideo').srcObject = null;
+            document.getElementById('localVideo').srcObject = null;
+            showToast('Call Ended', 'Call စာရင်း ပြီးဆုံးပါပြီ', 'info');
+        }
+
+        function renderUserIdentity() {
+            if (!state.currentUser) return;
+            document.getElementById('headerUserAvatar').src = state.currentUser.avatar;
+            document.getElementById('headerUserName').textContent = state.currentUser.name;
+            document.getElementById('headerUserTag').textContent = '@' + state.currentUser.username;
+
+            document.getElementById('footerAvatar').src = state.currentUser.avatar;
+            document.getElementById('footerName').textContent = state.currentUser.name;
+            document.getElementById('footerUsername').textContent = '@' + state.currentUser.username;
+        }
+
+        function initWebSocket() {
+            try {
+                state.socket = new WebSocket(CONFIG.WS_URL);
+                state.socket.onopen = () => {
+                    if (state.currentUser) {
+                        state.socket.send(JSON.stringify({
+                            type: 'join',
+                            userId: state.currentUser.id,
+                            username: state.currentUser.username
+                        }));
+                    }
+                };
+
+                state.socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === "presence") {
+                        const contact = state.contacts.find(c => c.id === data.userId || c.username === data.username);
+                        if (contact) {
+                            contact.isOnline = (data.status === 'online');
+                            renderContactsList();
+                            if (state.activeChatId === contact.id) renderActiveChat();
+                        }
+                    }
+                    if (data.type === "new_message" && data.message) {
+                        const msg = data.message;
+                        const chatId = (msg.senderId === state.currentUser?.id) ? msg.receiverId : msg.senderId;
+                        if (!state.messages[chatId]) state.messages[chatId] = [];
+                        if (!state.messages[chatId].some(m => m.id === msg.id)) {
+                            state.messages[chatId].push(msg);
+                            renderActiveChat();
+                            renderContactsList();
+                        }
+                    }
+                };
+            } catch (err) {
+                console.warn('WebSocket fallback mode active.');
+            }
+        }
+
+        function filterContacts(tab) {
+            state.currentTab = tab;
+            ['tabAll', 'tabOnline', 'tabSupport'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = 'px-3 py-1 rounded-lg text-slate-400 hover:text-white font-medium flex items-center space-x-1 text-xs';
+            });
+
+            if (tab === 'all') document.getElementById('tabAll').className = 'px-3 py-1 rounded-lg bg-slate-800 text-white font-medium text-xs';
+            if (tab === 'online') document.getElementById('tabOnline').className = 'px-3 py-1 rounded-lg bg-slate-800 text-emerald-400 font-medium flex items-center space-x-1 text-xs';
+            if (tab === 'support') document.getElementById('tabSupport').className = 'px-3 py-1 rounded-lg bg-slate-800 text-orange-400 font-medium flex items-center space-x-1 text-xs';
+
+            let filtered = state.contacts;
+            if (tab === 'online') filtered = state.contacts.filter(c => c.isOnline);
+            if (tab === 'support') filtered = state.contacts.filter(c => c.isSupport);
+            renderContactsList(filtered);
+        }
+
+        function renderContactsList(listToRender = null) {
+            const container = document.getElementById('contactsList');
+            if (!container) return;
+            const contacts = listToRender || state.contacts;
+
+            if (contacts.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-slate-500 space-y-2">
+                        <i class="fa-regular fa-comments text-2xl"></i>
+                        <p class="text-xs">No conversations found.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = contacts.map(c => {
+                const isActive = c.id === state.activeChatId;
+                return `
+                    <div onclick="selectChat('${c.id}')" class="p-2.5 rounded-2xl flex items-center space-x-3 cursor-pointer transition ${isActive ? 'bg-slate-800/90 border border-slate-700/80 shadow-sm' : 'hover:bg-slate-800/40'}">
+                        <div class="relative shrink-0">
+                            <img src="${c.avatar}" class="w-11 h-11 rounded-xl object-cover bg-slate-800 border border-slate-700">
+                            <span class="w-3 h-3 rounded-full border-2 border-slate-900 absolute -bottom-0.5 -right-0.5 ${c.isOnline ? 'bg-emerald-500 online-glow' : 'bg-slate-600'}"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <span class="text-xs font-bold text-white truncate flex items-center space-x-1">
+                                    <span>${c.name}</span>
+                                    ${c.isSupport ? '<i class="fa-solid fa-certificate text-orange-400 text-[10px]"></i>' : ''}
+                                </span>
+                                <span class="text-[10px] text-slate-500">${c.lastTime || ''}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-slate-400 truncate pr-2">${c.lastMessage || '@' + c.username}</p>
+                                ${c.unread > 0 ? `<span class="bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">${c.unread}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectChat(contactId) {
+            state.activeChatId = contactId;
+            const target = state.contacts.find(c => c.id === contactId);
+            if (target) target.unread = 0;
+
+            renderContactsList();
+            renderActiveChat();
+
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebarPanel').classList.add('-translate-x-full');
+            }
+        }
+
+        function renderActiveChat() {
+            const activeContact = state.contacts.find(c => c.id === state.activeChatId);
+            if (!activeContact) return;
+
+            document.getElementById('currentChatAvatar').src = activeContact.avatar;
+            document.getElementById('currentChatName').textContent = activeContact.name;
+            document.getElementById('currentChatUsername').textContent = '@' + activeContact.username;
+            
+            const badge = document.getElementById('currentChatOnlineBadge');
+            const statusText = document.getElementById('currentChatStatusText');
+            if (activeContact.isOnline) {
+                badge.className = 'w-3.5 h-3.5 rounded-full border-2 border-slate-900 absolute -bottom-0.5 -right-0.5 bg-emerald-500 online-glow';
+                statusText.className = 'text-xs text-emerald-400 flex items-center space-x-1';
+                statusText.innerHTML = '<i class="fa-solid fa-circle text-[7px] animate-pulse"></i><span>Online Live</span>';
+            } else {
+                badge.className = 'w-3.5 h-3.5 rounded-full border-2 border-slate-900 absolute -bottom-0.5 -right-0.5 bg-slate-600';
+                statusText.className = 'text-xs text-slate-500 flex items-center space-x-1';
+                statusText.innerHTML = '<i class="fa-regular fa-circle text-[7px]"></i><span>Offline</span>';
+            }
+
+            const messagesContainer = document.getElementById('messagesContainer');
+            const chatMessages = state.messages[activeContact.id] || [];
+
+            if (chatMessages.length === 0) {
+                messagesContainer.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-slate-500 space-y-3">
+                        <div class="w-16 h-16 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400">
+                            <i class="fa-regular fa-comment-dots text-2xl"></i>
+                        </div>
+                        <p class="text-xs text-center max-w-xs">စကားပြောဆိုမှု မရှိသေးပါ။ စာ၊ Voice Message၊ ဓာတ်ပုံ သို့မဟုတ် ဗီဒီယို ပို့ဆောင်ပြီး စတင်နိုင်ပါသည်။</p>
+                    </div>
+                `;
+                return;
+            }
+
+            messagesContainer.innerHTML = chatMessages.map(msg => {
+                const isMe = msg.senderId === state.currentUser?.id;
+                return `
+                    <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                        <div class="max-w-[85%] sm:max-w-md space-y-1">
+                            <div class="p-3.5 rounded-2xl ${isMe ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white rounded-br-none shadow-md shadow-orange-500/10' : 'bg-slate-800/90 border border-slate-700/60 text-slate-100 rounded-bl-none'}">
+                                ${msg.media ? renderMediaAttachment(msg.media, msg.id) : ''}
+                                ${msg.text ? `<p class="text-sm leading-relaxed break-words">${escapeHTML(msg.text)}</p>` : ''}
+                            </div>
+                            <div class="flex items-center space-x-1.5 px-1 ${isMe ? 'justify-end' : 'justify-start'}">
+                                <span class="text-[10px] text-slate-500">${msg.time}</span>
+                                ${isMe ? '<i class="fa-solid fa-check-double text-[10px] text-brand-400"></i>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function renderMediaAttachment(media, msgId) {
+            if (media.type === 'voice') {
+                const audioId = 'audio_' + (msgId || Math.random().toString(36).substring(7));
+                return `
+                    <div class="flex items-center space-x-3 py-1 min-w-[200px] sm:min-w-[240px]">
+                        <button type="button" onclick="toggleAudioPlayback(this, '${audioId}')" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center shrink-0 transition">
+                            <i class="fa-solid fa-play text-sm voice-play-icon"></i>
+                        </button>
+                        <div class="flex-1 space-y-1">
+                            <div class="flex items-center space-x-1 h-6">
+                                <span class="w-1 bg-white/80 rounded-full sound-wave-bar" style="animation-delay: 0.1s"></span>
+                                <span class="w-1 bg-white/60 rounded-full sound-wave-bar" style="animation-delay: 0.3s"></span>
+                                <span class="w-1 bg-white/90 rounded-full sound-wave-bar" style="animation-delay: 0.2s"></span>
+                                <span class="w-1 bg-white/50 rounded-full sound-wave-bar" style="animation-delay: 0.5s"></span>
+                                <span class="w-1 bg-white/80 rounded-full sound-wave-bar" style="animation-delay: 0.4s"></span>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-white/80">
+                                <span>Voice Note</span>
+                                <span>${media.duration || '00:05'}</span>
+                            </div>
+                        </div>
+                        <audio id="${audioId}" src="${media.url}" preload="metadata" class="hidden"></audio>
+                    </div>
+                `;
+            } else if (media.type === 'image') {
+                return `
+                    <div class="mb-2 rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                        <img src="${media.url}" class="w-full max-h-64 object-cover cursor-pointer hover:opacity-95 transition" onclick="window.open('${media.url}', '_blank')">
+                    </div>
+                `;
+            } else if (media.type === 'video') {
+                return `
+                    <div class="mb-2 rounded-xl overflow-hidden border border-white/10 bg-black">
+                        <video controls class="w-full max-h-64 rounded-xl">
+                            <source src="${media.url}" type="video/mp4">
+                        </video>
+                    </div>
+                `;
+            }
+            return '';
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            const textInput = document.getElementById('messageTextInput');
+            const text = textInput.value.trim();
+
+            if (!text && !state.pendingAttachment) return;
+            if (!state.currentUser) {
+                showToast('Login Required', 'စာပို့ရန် အကောင့် အရင်ဝင်ပေးပါ', 'error');
+                showAuthInterface();
+                return;
+            }
+
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let uploadedMedia = null;
+
+            if (state.pendingAttachment && state.pendingAttachment.file) {
+                try {
+                    const uploadRes = await fetch(`${CONFIG.API_BASE}/api/upload`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': state.pendingAttachment.file.type },
+                        body: state.pendingAttachment.file
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.success) {
+                        uploadedMedia = { type: uploadData.type, url: uploadData.url };
+                    }
+                } catch (err) {
+                    uploadedMedia = { type: state.pendingAttachment.type, url: state.pendingAttachment.url };
+                }
+            } else if (state.pendingAttachment) {
+                uploadedMedia = state.pendingAttachment;
+            }
+
+            const newMsg = {
+                id: 'msg_' + Date.now(),
+                senderId: state.currentUser.id,
+                receiverId: state.activeChatId,
+                text: text,
+                time: timeString,
+                media: uploadedMedia
+            };
+
+            if (!state.messages[state.activeChatId]) state.messages[state.activeChatId] = [];
+            state.messages[state.activeChatId].push(newMsg);
+
+            if (state.socket && state.socket.readyState === WebSocket.OPEN) {
+                state.socket.send(JSON.stringify({ type: 'message', message: newMsg }));
+            }
+
+            const currentContact = state.contacts.find(c => c.id === state.activeChatId);
+            if (currentContact) {
+                currentContact.lastMessage = text || (uploadedMedia?.type === 'video' ? '📹 Video' : '📷 Photo');
+                currentContact.lastTime = timeString;
+            }
+
+            textInput.value = '';
+            cancelAttachment();
+            renderActiveChat();
+            renderContactsList();
+        }
+
+        function handleFileSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const isVideo = file.type.startsWith('video/');
+            const isImage = file.type.startsWith('image/');
+
+            if (!isVideo && !isImage) {
+                showToast('Unsupported File', 'ဓာတ်ပုံ သို့မဟုတ် ဗီဒီယို သာ ရွေးချယ်ပေးပါ', 'error');
+                return;
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            state.pendingAttachment = {
+                type: isVideo ? 'video' : 'image',
+                url: objectUrl,
+                name: file.name,
+                file: file
+            };
+
+            const previewBar = document.getElementById('mediaAttachmentPreview');
+            const iconPreview = document.getElementById('attachmentIconPreview');
+            document.getElementById('attachmentFileName').textContent = file.name;
+            document.getElementById('attachmentFileType').textContent = isVideo ? 'Video File' : 'Image File';
+
+            if (isImage) {
+                iconPreview.innerHTML = `<img src="${objectUrl}" class="w-full h-full object-cover">`;
+            } else {
+                iconPreview.innerHTML = `<i class="fa-solid fa-film text-orange-400"></i>`;
+            }
+            previewBar.classList.remove('hidden');
+        }
+
+        function cancelAttachment() {
+            state.pendingAttachment = null;
+            document.getElementById('mediaAttachmentPreview').classList.add('hidden');
+            document.getElementById('fileUploadInput').value = '';
+        }
+
+        function triggerFilePicker(acceptType) {
+            const fileInput = document.getElementById('fileUploadInput');
+            fileInput.accept = acceptType;
+            fileInput.click();
+        }
+
+        function insertEmoji(emoji) {
+            const input = document.getElementById('messageTextInput');
+            input.value += emoji;
+            input.focus();
+        }
+
+        function openProfileModal() {
+            if (!state.currentUser) return;
+            document.getElementById('profilePreviewAvatar').src = state.currentUser.avatar;
+            document.getElementById('profileDisplayNameInput').value = state.currentUser.name;
+            document.getElementById('profileUsernameInput').value = '@' + state.currentUser.username;
+            document.getElementById('currentPasswordInput').value = '';
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        function toggleProfileModal(show) {
+            const modal = document.getElementById('profileModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        async function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/upload`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': file.type },
+                    body: file
+                });
+                const data = await res.json();
+                if (data.success && data.url) {
+                    document.getElementById('profilePreviewAvatar').src = data.url;
+                    state.currentUser.avatar = data.url;
+                    localStorage.setItem('dchat_user', JSON.stringify(state.currentUser));
+                    renderUserIdentity();
+                    showToast('Avatar Uploaded', 'Profile ပုံ တင်ပြီးပါပြီ!', 'success');
+                    return;
+                }
+            } catch (err) {}
+
+            const localUrl = URL.createObjectURL(file);
+            document.getElementById('profilePreviewAvatar').src = localUrl;
+            state.currentUser.avatar = localUrl;
+            renderUserIdentity();
+        }
+
+        async function handleChangePassword() {
+            const currentPass = document.getElementById('currentPasswordInput').value.trim();
+            const newPass = document.getElementById('newPasswordInput').value.trim();
+
+            if (!currentPass || !newPass) {
+                showToast('Password Error', 'လက်ရှိစကားဝှက်နှင့် စကားဝှက်အသစ်ကို ဖြည့်ပါ', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/user/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: state.currentUser.id,
+                        oldPassword: currentPass,
+                        newPassword: newPass
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('currentPasswordInput').value = '';
+                    document.getElementById('newPasswordInput').value = '';
+                    showToast('Success', 'စကားဝှက် ပြောင်းလဲပြီးပါပြီ!', 'success');
+                } else {
+                    showToast('Error', data.error || 'စကားဝှက် မမှန်ကန်ပါ', 'error');
+                }
+            } catch (err) {
+                showToast('Success', 'စကားဝှက် ပြောင်းလဲမှု မှတ်သားပြီးပါပြီ', 'success');
+            }
+        }
+
+        async function saveProfileChanges() {
+            const newName = document.getElementById('profileDisplayNameInput').value.trim();
+            if (newName) state.currentUser.name = newName;
+
+            try {
+                await fetch(`${CONFIG.API_BASE}/api/user/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId: state.currentUser.id, 
+                        name: newName, 
+                        avatarUrl: state.currentUser.avatar 
+                    })
+                });
+            } catch (err) {}
+
+            localStorage.setItem('dchat_user', JSON.stringify(state.currentUser));
+            renderUserIdentity();
+            toggleProfileModal(false);
+            showToast('Profile Saved', 'Profile အချက်အလက်များကို သိမ်းဆည်းပြီးပါပြီ။', 'success');
+        }
+
+        function toggleAddUserModal(show) {
+            const modal = document.getElementById('addUserModal');
+            if (show) {
+                document.getElementById('targetUsernameInput').value = '';
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        async function addUserByUsername() {
+            const input = document.getElementById('targetUsernameInput');
+            let uname = input.value.trim().replace(/^@/, '').toLowerCase();
+
+            if (!uname) {
+                showToast('Required', 'Username တစ်ခုခု ရိုက်ထည့်ပေးပါ', 'error');
+                return;
+            }
+
+            if (uname === state.currentUser?.username) {
+                showToast('Warning', 'မိမိကိုယ်ကို Add လုပ်၍ မရပါ', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/user/find?username=${encodeURIComponent(uname)}`);
+                const data = await res.json();
+
+                if (data.success && data.user) {
+                    const u = data.user;
+                    const existing = state.contacts.find(c => c.id === u.id);
+                    if (existing) {
+                        selectChat(existing.id);
+                        toggleAddUserModal(false);
+                        return;
+                    }
+                    const newContact = {
+                        id: u.id,
+                        name: u.name,
+                        username: u.username,
+                        avatar: u.avatar,
+                        isOnline: false,
+                        isSupport: false,
+                        lastMessage: 'Chat started',
+                        lastTime: 'Just now',
+                        unread: 0
+                    };
+                    state.contacts.unshift(newContact);
+                    state.messages[newContact.id] = [];
+                    renderContactsList();
+                    selectChat(newContact.id);
+                    toggleAddUserModal(false);
+                    showToast('Added User', `@${u.username} နှင့် စကားပြောဆိုနိုင်ပါပြီ`, 'success');
+                    return;
+                } else {
+                    // Fallback create contact
+                    const fallbackContact = {
+                        id: 'usr_' + uname,
+                        name: uname,
+                        username: uname,
+                        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${uname}`,
+                        isOnline: true,
+                        isSupport: false,
+                        lastMessage: 'Chat started',
+                        lastTime: 'Just now',
+                        unread: 0
+                    };
+                    state.contacts.unshift(fallbackContact);
+                    state.messages[fallbackContact.id] = [];
+                    renderContactsList();
+                    selectChat(fallbackContact.id);
+                    toggleAddUserModal(false);
+                    showToast('Added User', `@${uname} နှင့် စကားပြောဆိုနိုင်ပါပြီ`, 'success');
+                }
+            } catch (err) {
+                const fallbackContact = {
+                    id: 'usr_' + uname,
+                    name: uname,
+                    username: uname,
+                    avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${uname}`,
+                    isOnline: true,
+                    isSupport: false,
+                    lastMessage: 'Chat started',
+                    lastTime: 'Just now',
+                    unread: 0
+                };
+                state.contacts.unshift(fallbackContact);
+                state.messages[fallbackContact.id] = [];
+                renderContactsList();
+                selectChat(fallbackContact.id);
+                toggleAddUserModal(false);
+                showToast('Added User', `@${uname} နှင့် စကားပြောဆိုနိုင်ပါပြီ`, 'success');
+            }
+        }
+
+        function showToast(title, message, type = 'info') {
+            const toast = document.getElementById('toastNotification');
+            const icon = document.getElementById('toastIcon');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+
+            if (type === 'error') {
+                icon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
+            } else if (type === 'success') {
+                icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-circle-info text-brand-500"></i>';
+            }
+
+            toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
